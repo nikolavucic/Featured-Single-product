@@ -1,0 +1,369 @@
+{% comment %} Liquid template for displaying "Featured single special product" section {% endcomment %}
+
+{% comment %} Importing style assets {% endcomment %}
+{{ 'slick.css' | asset_url | stylesheet_tag }}
+{{ 'slick-theme.css' | asset_url | stylesheet_tag }}
+{{ 'section-featured-single-product.css' | asset_url | stylesheet_tag }}
+
+<div class="featured-single-product" style="background-color: {{  section.settings.background-color  }} ;">
+    <div class="featured-single-product__inner-wrap">
+        <h2 class="featured-single-product__section-title">{{  section.settings.title  }}</h2>
+
+        {% comment %} Preparing featured_single_product object {% endcomment %}
+        {% for block in section.blocks %}
+            {% for product_object in collections.all.products %}
+                {% if product_object.handle == block.settings.product %}
+                    {% assign featured_single_product = product_object %} 
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+
+        <div class="featured-single-product__content">
+
+            <div class="featured-single-product__gallery">
+              <div class="featured-single-product__slider slider-for">
+                {% comment %} Looping trough all variant images to display them in slider {% endcomment %}
+                {% for variant in featured_single_product.variants %} 
+                  <div class="variant-image-wrapp">
+                    <img class="variant-image js-variant-image" src="{{ variant.featured_image | image_url }}" alt="{{ variant.featured_image.alt }}" image-variant-id="{{ variant.id }}">
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="featured-single-product__slider--nav slider-nav">
+                {% comment %} Looping trough all variant images to display them in slider {% endcomment %}
+                {% for variant in featured_single_product.variants %} 
+                  {% comment %} <div class="variant-image-wrapp"> {% endcomment %}
+                    <img src="{{ variant.featured_image | image_url }}" alt="{{ variant.featured_image.alt }}" image-variant-id="{{ variant.id }}">
+                  {% comment %} </div> {% endcomment %}
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="featured-single-product__form">
+
+              {% comment %} Preparing Product ratings {% endcomment %}
+              {% assign rating = featured_single_product.metafields.custom.product_rating.value | default: 1 %}
+              {% assign max_stars = 5 %}
+                <!-- Product rating -->
+                <div class="featured-single-product__rating">
+                  {% for i in (1..max_stars) %}
+                    {% if rating >= i %}
+                      <div class="star"></div>
+                    {% endif %}
+                  {% endfor %}
+                  <span class="product-rating-text">0 Reviews</span>
+                </div>
+
+                <!-- Product title -->
+                <h3 class="featured-single-product__title">{{ featured_single_product.title }}</h3>
+
+                <!-- Product description -->
+                {% if featured_single_product.description %}
+                    <div class="featured-single-product__description">{{ featured_single_product.description }}</div>
+                {% endif %}
+
+                <!-- Product metafields (What's inside section) -->
+                {% if featured_single_product.metafields.custom.lorem_ipsum_dolor or featured_single_product.metafields.custom.lorem_ipsum_dolor_sit %}
+                    <div class="featured-single-product__metafields">
+                        <p class="metafields-title">What’s inside:</p>
+                        {% if featured_single_product.metafields.custom.lorem_ipsum_dolor %}
+                            <div class="metafields-row">
+                                <img src="{{ 'Check-orange.svg' | asset_url }}" alt="Check icon">
+                                <div class="metafields-name-value">
+                                    <p>1 x Lorem ipsum dolor </p>
+                                    <p>{{ featured_single_product.metafields.custom.lorem_ipsum_dolor }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                        {% if featured_single_product.metafields.custom.lorem_ipsum_dolor_sit %}
+                            <div class="metafields-row">
+                                <img src="{{ 'Check-orange.svg' | asset_url }}" alt="Check icon">
+                                <div class="metafields-name-value">
+                                    <p>1 x Lorem ipsum dolor sit</p>
+                                    <p>{{ featured_single_product.metafields.custom.lorem_ipsum_dolor_sit }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% comment %} Looping through product otions to display Colors and Sizes {% endcomment %}
+                {%- for option in featured_single_product.options_with_values -%}
+
+                  {% comment %} Color swatches {% endcomment %}
+                  {% if option.name == "Color" %}
+                    <div class="featured-single-product__swatches">
+                      <p class="swatches-label">Choose your color:</p>
+                      {%- for value in option.values -%}
+                        {%- liquid
+                          assign swatch_focal_point = null
+                          if value.swatch.image
+                            assign image_url = value.swatch.image | image_url: width: 50
+                            assign swatch_value = 'url(' | append: image_url | append: ')'
+                            assign swatch_focal_point = value.swatch.image.presentation.focal_point
+                          elsif value.swatch.color
+                            assign swatch_value = 'rgb(' | append: value.swatch.color.rgb | append: ')'
+                          else
+                            assign swatch_value = null
+                          endif
+                      
+                          assign option_disabled = true
+                          if value.available
+                            assign option_disabled = false
+                          endif
+                        -%}
+                      
+                        {%- capture input_id -%}
+                          {{ section.id }}-{{ option.position }}-{{ forloop.index0 -}}
+                        {%- endcapture -%}
+                      
+                        {%- capture input_name -%}
+                          {{ option.name }}-{{ option.position }}
+                        {%- endcapture -%}
+                      
+                        {%- capture input_dataset -%}
+                          data-product-url="{{ value.product_url }}"
+                          data-option-value-id="{{ value.id }}"
+                        {%- endcapture -%}
+                      
+                        {%
+                          render 'swatch-input',
+                          id: input_id,
+                          name: input_name,
+                          value: value | escape,
+                          swatch: value.swatch,
+                          product_form_id: product_form_id,
+                          checked: value.selected,
+                          visually_disabled: option_disabled,
+                          shape: block.settings.swatch_shape,
+                          help_text: '',
+                          additional_props: input_dataset
+                        %}
+                      {%- endfor -%}
+                    </div>
+                  {% endif %}
+
+                  {% comment %} Size dropdown {% endcomment %}
+                  {% if option.name == "Size" %}
+                    <div class="featured-single-product__dropdown">
+                      <p class="dropdown-label">Choose your size:</p>
+                      <select class="select__select">
+                        {%- for value in option.values -%}
+                          {%- liquid
+                            assign swatch_focal_point = null
+                            if value.swatch.image
+                              assign image_url = value.swatch.image | image_url: width: 50
+                              assign swatch_value = 'url(' | append: image_url | append: ')'
+                              assign swatch_focal_point = value.swatch.image.presentation.focal_point
+                            elsif value.swatch.color
+                              assign swatch_value = 'rgb(' | append: value.swatch.color.rgb | append: ')'
+                            else
+                              assign swatch_value = null
+                            endif
+                        
+                            assign option_disabled = true
+                            if value.available
+                              assign option_disabled = false
+                            endif
+                          -%}
+                        
+                          {%- capture input_id -%}
+                            {{ section.id }}-{{ option.position }}-{{ forloop.index0 -}}
+                          {%- endcapture -%}
+                        
+                          {%- capture input_dataset -%}
+                            data-product-url="{{ value.product_url }}"
+                            data-option-value-id="{{ value.id }}"
+                          {%- endcapture -%}
+                        
+                          <option
+                            id="{{ input_id }}"
+                            class="js-select-option"
+                            value="{{ value | escape }}"
+                            {% if value.selected %}
+                              selected="selected"
+                            {% endif %}
+                            {% if swatch_value %}
+                              data-option-swatch-value="{{ swatch_value }}"
+                              {% if swatch_focal_point %}
+                                data-option-swatch-focal-point="{{ swatch_focal_point }}"
+                              {% endif %}
+                            {% endif %}
+                            {{ input_dataset }}
+                          >
+                            {% if option_disabled -%}
+                              {{- 'products.product.value_unavailable' | t: option_value: value -}}
+                            {%- else -%}
+                              {{- value -}}
+                            {%- endif %}
+                          </option>
+                        {%- endfor -%}
+                      </select>
+                    </div>
+                  {% endif %}
+                {% endfor %}
+
+                <!-- Product form -->
+                {%- form 'product', featured_single_product -%}
+                  <div class="featured-single-product__quantity-input">
+                    <quantity-input class="quantity" data-url="{{ featured_single_product.url }}">
+                      <button class="quantity__button" name="minus" type="button">
+                        <span class="svg-wrapper">
+                          {{- 'icon-minus.svg' | inline_asset_content -}}
+                        </span>
+                      </button>
+                      <input
+                        class="quantity__input"
+                        type="number"
+                        name="quantity"
+                        data-min="{{ featured_single_product.selected_or_first_available_variant.quantity_rule.min }}"
+                        min="{{ featured_single_product.selected_or_first_available_variant.quantity_rule.min }}"
+                        {% if featured_single_product.selected_or_first_available_variant.quantity_rule.max != null %}
+                          data-max="{{ featured_single_product.selected_or_first_available_variant.quantity_rule.max }}"
+                          max="{{ featured_single_product.selected_or_first_available_variant.quantity_rule.max }}"
+                        {% endif %}
+                        step="{{ featured_single_product.selected_or_first_available_variant.quantity_rule.increment }}"
+                        value="{{ featured_single_product.selected_or_first_available_variant.quantity_rule.min }}"
+                      >
+                      <button class="quantity__button" name="plus" type="button">
+                        <span class="svg-wrapper">
+                          {{- 'icon-plus.svg' | inline_asset_content -}}
+                        </span>
+                      </button>
+                    </quantity-input>
+                  </div>
+
+                  {% comment %} Main input field {% endcomment %}
+                  <input class="product-variant-id" type="hidden" name="id" value="{{ featured_single_product.selected_or_first_available_variant.id }}">
+
+                  <div class="button-wrapp">
+                    <!-- Product add to cart button -->
+                    <button
+                      id="ProductSubmitButton-{{ section.id }}"
+                      type="submit"
+                      class="product-form__submit button button--featured-single-add-to-cart"
+                      {% if featured_single_product.selected_or_first_available_variant.available == false or featured_single_product.selected_or_first_available_variant == nil %}
+                        disabled
+                      {% endif %}
+                    >
+                      <div>
+                        {% if featured_single_product.selected_or_first_available_variant == nil %}
+                          {{ 'products.product.unavailable' | t }}
+                        {% elsif featured_single_product.selected_or_first_available_variant.available == false -%}
+                          out of stock
+                        {% else %}
+                        <p class="featured-single-price"> 
+                          <span class="featured-single-text">ADD TO CART - </span>
+                          {% if featured_single_product.selected_or_first_available_variant.compare_at_price > featured_single_product.selected_or_first_available_variant.price %}
+                            <span class="featured-single-active-price">
+                              {{ featured_single_product.selected_or_first_available_variant.price | money }}
+                            </span>
+                            <span class="featured-single-compare_at_price" style="text-decoration: line-through;">
+                                {{ featured_single_product.selected_or_first_available_variant.compare_at_price | money }}
+                            </span>
+                        {% else %}
+                            <span class="featured-single-active-price">
+                                {{ featured_single_product.selected_or_first_available_variant.price | money }}
+                            </span>
+                        {% endif %}
+                        </p>
+                        {% endif %}
+                      </div>
+                    </button>
+
+                    <!-- Payment info -->
+                    <div class="paymant-info">
+                      <p>4 interest-free installments of $18.00 with</p>
+                      <img src="{{ 'shop-pay-icon.svg' | asset_url }}" alt="Shop Pay icon">
+                    </div>
+
+                    <!-- Shipping info -->
+                    <p class="shipping-info">Free US Shipping over $65 | Free US Returns</p>
+                  </div>
+
+                  <!-- Cart popup -->
+                  <div id="cart-popup" style="display: none;"> 
+                    <div class="cart-popup-content">
+                      <div class="popup-content-left">
+                        <img class="cart-popup-image" src="" alt="Product Image" width="100%" height="auto">
+                        <div class="cart-popup-color-swatch-wrapper">
+                          <span class="cart-popup-title"></span>
+                          <span class="cart-popup-size"></span>
+                          <div class="cart-popup-color-swatch"></div>
+                        </div>
+                      </div>
+                      <div class="popup-content-right">
+                        <span class="cart-popup-added-text">ADDED!</span>
+                        <a href="/cart" class="cart-popup-view-cart">View Cart</a>
+                      </div>
+                    </div>
+                  </div>
+
+                {%- endform -%}
+
+                <!-- Product metafields (Badge section) -->
+                {% comment %} TO DO:
+                Nadji nacin da ubacis vise slika kroz jedno metafiled polje (npr. repetable-entry), 
+                a ne samo jednu sliku. Ili povezi Metadata sa metafildom pa probaj odatle {% endcomment %}
+                <div class="featured-single-product__badges">
+                  <img src="{{ featured_single_product.metafields.custom.featured_single_product_badge | file_url }}" alt="Badge">
+                </div>
+
+            </div>  <!-- /.featured-single-product__form -->
+        </div> <!-- /.featured-single-product__content -->
+    </div> <!-- /.featured-single-product__inner-wrap -->
+    
+</div> <!-- /.featured-single-product -->
+
+<script>
+  // Converting the Shopify product object to JSON and assigning it to a JavaScript variable
+  var product = {{ featured_single_product | json }};
+</script>
+
+{% comment %} Importing script assets {% endcomment %}
+{{ 'jquery-1.11.0.min.js' | asset_url | script_tag }}
+{{ 'jquery-migrate-1.2.1.min.js' | asset_url | script_tag }}
+{{ 'slick.min.js' | asset_url | script_tag }}
+{{ 'section-featured_single-product.js' | asset_url | script_tag }} 
+
+
+{% schema %}
+
+{
+  "name": "Featured single Product",
+  "tag": "section",
+  "settings": [
+    {
+        "type": "text",
+        "id": "title",
+        "label": "Featured single Product Title",
+        "default": "Featured single Special Product"
+    },
+    {
+        "type": "color",
+        "id": "background-color",
+        "label": "Background color",
+        "default": "#FCF4EE"
+    }
+  ],
+  "blocks": [
+    {
+        "type": "collumn",
+        "name": "product",
+        "settings": [
+            {
+            "type": "product",
+            "id": "product",
+            "label": "Product"
+            }
+        ]
+    }
+  ],
+  "presets": [
+    {
+        "name": "Featured single Special Product",
+    }
+  ]
+}
+
+{% endschema %}

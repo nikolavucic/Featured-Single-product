@@ -1,0 +1,33 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# misc
+.DS_Store
+assets/.DS_Store
+
+# folders
+config/
+layout/
+locales/*
+snippets/
+templates/
+
+# assets
+assets/*
+!assets/Check-orange.svg
+!assets/chevron-icon--rotate.svg
+!assets/chevron-icon.svg
+!assets/jquery-1.11.0.min.js
+!assets/jquery-migrate-1.2.1.min.js
+!assets/section-featured-single-product.css
+!assets/section-featured-single-product.js
+!assets/shop-pay-icon.svg
+!assets/slick-theme.css
+!assets/slick.css
+!assets/slick.min.js
+!assets/slider-arrow-left.svg
+!assets/slider-arrow-right.svg
+!assets/star.png
+
+# sections
+sections/*
+!sections/featured-single-product.liquid
