@@ -8,7 +8,6 @@ assets/.DS_Store
 config/
 layout/
 locales/*
-snippets/
 templates/
 
 # assets
@@ -31,3 +30,8 @@ assets/*
 # sections
 sections/*
 !sections/featured-single-product.liquid
+
+# snippets
+snippets/*
+!snippets/swatch-input.liquid
+!snippets/swatch.liquid
